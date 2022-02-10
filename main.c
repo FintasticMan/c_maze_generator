@@ -21,7 +21,8 @@ int main(int argc, char * * argv) {
 
     struct maze mz = create_maze(rows, columns);
 
-    generate_maze(&mz, 0, 0);
+    generate_maze(&mz);
+    find_path_maze(&mz, 0, 0);
 
     for (int row = 0; row < rows; row++) {
         for (int column = 0; column < columns; column++) {

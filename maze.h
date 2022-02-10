@@ -15,7 +15,9 @@ struct maze {
 struct maze create_maze(const int rows, const int columns);
 void destroy_maze(struct maze * mz);
 
+void generate_maze(struct maze * mz);
+bool gen_maze(struct maze * mz, const int row, const int column);
 bool try_move_maze(struct maze * mz, const int row, const int column, const int choice);
-bool generate_maze(struct maze * mz, const int row, const int column);
+bool find_path_maze(struct maze * mz, const int row, const int column);
 
 #endif
