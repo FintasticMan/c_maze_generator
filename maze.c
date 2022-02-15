@@ -4,19 +4,19 @@
 #include "maze.h"
 
 struct maze {
-        size_t     rows;
-        size_t     columns;
-        size_t     visited;
-        bool * * cells;
-        bool * * horiz_walls;
-        bool * * vert_walls;
+        size_t  rows;
+        size_t  columns;
+        size_t  visited;
+        bool ** cells;
+        bool ** horiz_walls;
+        bool ** vert_walls;
 };
 
 bool gen_maze(struct maze * mz, size_t row, size_t column);
-bool try_move_maze(struct maze * mz,
-                   size_t     row,
-                   size_t     column,
-                   unsigned short     choice);
+bool try_move_maze(struct maze *  mz,
+                   size_t         row,
+                   size_t         column,
+                   unsigned short choice);
 bool find_path_maze(struct maze * mz, size_t row, size_t column);
 
 struct maze * create_maze(const size_t rows, const size_t columns) {
@@ -77,8 +77,8 @@ bool gen_maze(struct maze * mz, const size_t row, const size_t column) {
         return true;
     }
 
-    bool chosen[4U] = {false};
-    unsigned short  nb_chosen = 0U;
+    bool           chosen[4U] = {false};
+    unsigned short nb_chosen  = 0U;
     while (nb_chosen < 4U) {
         unsigned short choice = rand() / ((RAND_MAX + 1U) / 4U);
         if (!chosen[choice]) {
@@ -94,9 +94,9 @@ bool gen_maze(struct maze * mz, const size_t row, const size_t column) {
     return false;
 }
 
-bool try_move_maze(struct maze * mz,
-                   const size_t     row,
-                   const size_t     column,
+bool try_move_maze(struct maze *        mz,
+                   const size_t         row,
+                   const size_t         column,
                    const unsigned short choice) {
     switch (choice) {
         case 0U:
@@ -153,23 +153,27 @@ bool find_path_maze(struct maze * mz, const size_t row, const size_t column) {
         return true;
     }
 
-    if (!mz->horiz_walls[row][column] && row > 0U && !mz->cells[row - 1U][column]
+    if (!mz->horiz_walls[row][column] && row > 0U
+        && !mz->cells[row - 1U][column]
         && find_path_maze(mz, row - 1U, column)) {
         return true;
     }
 
     if (!mz->vert_walls[row][column] && column > 0U
-        && !mz->cells[row][column - 1U] && find_path_maze(mz, row, column - 1U)) {
+        && !mz->cells[row][column - 1U]
+        && find_path_maze(mz, row, column - 1U)) {
         return true;
     }
 
     if (!mz->horiz_walls[row + 1U][column] && row + 1U < mz->rows
-        && !mz->cells[row + 1U][column] && find_path_maze(mz, row + 1U, column)) {
+        && !mz->cells[row + 1U][column]
+        && find_path_maze(mz, row + 1U, column)) {
         return true;
     }
 
     if (!mz->vert_walls[row][column + 1U] && column + 1U < mz->columns
-        && !mz->cells[row][column + 1U] && find_path_maze(mz, row, column + 1U)) {
+        && !mz->cells[row][column + 1U]
+        && find_path_maze(mz, row, column + 1U)) {
         return true;
     }
 
