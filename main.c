@@ -4,44 +4,31 @@
 
 #include "maze.h"
 
-int main(int argc, char * * argv) {
+#define BASE 10
+
+int main(int argc, char ** argv) {
     if (argc < 3 || argc > 4) {
         fprintf(stderr, "Invalid number of arguments.\n");
         return 1;
     }
 
-    int rows = atoi(argv[1]);
-    int columns = atoi(argv[2]);
-    srand((argc == 4) ? atoi(argv[3]) : time(NULL));
+    size_t rows    = strtoull(argv[1], NULL, BASE);
+    size_t columns = strtoull(argv[2], NULL, BASE);
+    srand((argc == 4) ? strtoull(argv[3], NULL, BASE) : time(NULL));
 
-    if (rows <= 0 || columns <= 0) {
+    if (rows == 0U || columns == 0U) {
         fprintf(stderr, "Invalid size argument(s).\n");
         return 2;
     }
 
-    struct maze mz = create_maze(rows, columns);
+    struct maze * mz = create_maze(rows, columns);
 
-    generate_maze(&mz);
-    find_path_maze(&mz, 0, 0);
+    generate_maze(mz);
+    path_maze(mz);
 
-    for (int row = 0; row < rows; row++) {
-        for (int column = 0; column < columns; column++) {
-            printf(mz.horiz_walls[row][column] ? "+---" : "+   ");
-        }
-        printf("+\n");
+    print_maze(mz);
 
-        for (int column = 0; column < columns; column++) {
-            printf(mz.vert_walls[row][column] ? "|" : " ");
-            printf(mz.cells[row][column] ? " . " : "   ");
-        }
-        printf(mz.vert_walls[row][columns] ? "|\n" : " \n");
-    }
-    for (int column = 0; column < columns; column++) {
-        printf(mz.horiz_walls[rows][column] ? "+---" : "+   ");
-    }
-    printf("+\n");
-
-    destroy_maze(&mz);
+    destroy_maze(mz);
 
     return 0;
 }
