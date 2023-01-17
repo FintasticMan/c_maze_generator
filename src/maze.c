@@ -24,34 +24,36 @@ bool try_move_maze(
 bool find_path_maze(struct maze *mz, size_t row, size_t column);
 
 struct maze *create_maze(size_t const rows, size_t const columns) {
-    struct maze *const ret = malloc(sizeof (struct maze));
-    assert(ret);
+    assert(rows > 0 && columns > 0);
 
-    ret->rows = rows;
-    ret->columns = columns;
-    ret->visited = 0;
-    ret->cells = malloc(rows * sizeof (bool *));
-    ret->horiz_walls = malloc((rows + 1) * sizeof (bool *));
-    ret->vert_walls = malloc(rows * sizeof (bool *));
-    assert(ret->cells && ret->horiz_walls && ret->vert_walls);
+    struct maze *const mz = malloc(sizeof (struct maze));
+    assert(mz);
+
+    mz->rows = rows;
+    mz->columns = columns;
+    mz->visited = 0;
+    mz->cells = malloc(rows * sizeof (bool *));
+    mz->horiz_walls = malloc((rows + 1) * sizeof (bool *));
+    mz->vert_walls = malloc(rows * sizeof (bool *));
+    assert(mz->cells && mz->horiz_walls && mz->vert_walls);
     for (size_t row = 0; row < rows; row++) {
-        ret->cells[row] = calloc(columns, sizeof (bool));
-        ret->horiz_walls[row] = malloc(columns * sizeof (bool));
-        ret->vert_walls[row] = malloc((columns + 1) * sizeof (bool));
-        assert(ret->cells[row] && ret->horiz_walls[row] && ret->vert_walls[row]);
+        mz->cells[row] = calloc(columns, sizeof (bool));
+        mz->horiz_walls[row] = malloc(columns * sizeof (bool));
+        mz->vert_walls[row] = malloc((columns + 1) * sizeof (bool));
+        assert(mz->cells[row] && mz->horiz_walls[row] && mz->vert_walls[row]);
         for (size_t column = 0; column < columns; column++) {
-            ret->horiz_walls[row][column] = true;
-            ret->vert_walls[row][column] = true;
+            mz->horiz_walls[row][column] = true;
+            mz->vert_walls[row][column] = true;
         }
-        ret->vert_walls[row][columns] = true;
+        mz->vert_walls[row][columns] = true;
     }
-    ret->horiz_walls[rows] = malloc(columns * sizeof (bool));
-    assert(ret->horiz_walls[rows]);
+    mz->horiz_walls[rows] = malloc(columns * sizeof (bool));
+    assert(mz->horiz_walls[rows]);
     for (size_t column = 0; column < columns; column++) {
-        ret->horiz_walls[rows][column] = true;
+        mz->horiz_walls[rows][column] = true;
     }
 
-    return ret;
+    return mz;
 }
 
 void destroy_maze(struct maze *const mz) {
@@ -89,13 +91,11 @@ bool gen_maze(struct maze *const mz, size_t const row, size_t const column) {
     uint8_t nb_chosen = 0;
     while (nb_chosen < 4) {
         uint8_t choice;
-        {
-            int r;
-            do {
-                r = rand();
-            } while (r > RAND_MAX - (RAND_MAX % 4));
-            choice = r % 4;
-        }
+        int r;
+        do {
+            r = rand();
+        } while (r > RAND_MAX - (RAND_MAX % 4));
+        choice = r % 4;
 
         if (!chosen[choice]) {
             chosen[choice] = true;

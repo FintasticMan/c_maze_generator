@@ -16,11 +16,6 @@ int main(int argc, char **argv) {
     size_t columns = strtoull(argv[2], NULL, BASE);
     srand((argc == 4) ? strtoull(argv[3], NULL, BASE) : time(NULL));
 
-    if (rows == 0 || columns == 0) {
-        fprintf(stderr, "Invalid size argument(s).\n");
-        return 2;
-    }
-
     struct maze *mz = create_maze(rows, columns);
 
     generate_maze(mz);
