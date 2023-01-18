@@ -16,14 +16,14 @@ int main(int argc, char **argv) {
     size_t columns = strtoull(argv[2], NULL, BASE);
     srand((argc == 4) ? strtoull(argv[3], NULL, BASE) : time(NULL));
 
-    struct maze *mz = create_maze(rows, columns);
+    struct maze *mz = maze_create(rows, columns);
 
-    generate_maze(mz);
-    path_maze(mz);
+    maze_generate(mz);
+    maze_find_path(mz);
 
-    print_maze(mz);
+    maze_print(stdout, mz);
 
-    destroy_maze(mz);
+    maze_destroy(mz);
 
     return 0;
 }
