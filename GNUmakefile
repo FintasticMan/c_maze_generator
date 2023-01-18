@@ -12,7 +12,7 @@ OBJS := $(subst $(SRCDIR)/,$(OBJDIR)/,$(SRCS:.c=.o))
 DEPS := $(subst $(SRCDIR)/,$(DEPDIR)/,$(SRCS:.c=.d))
 BIN ?= main
 
-CPPFLAGS := -I$(INCDIR) $(CPPFLAGS)
+CPPFLAGS := -I"$(INCDIR)" $(CPPFLAGS)
 CFLAGS := -Wall -Wextra -Wpedantic -pipe -std=c17 $(CFLAGS)
 LDFLAGS := -fuse-ld=mold -lm $(LDFLAGS)
 
@@ -32,7 +32,8 @@ endif
 
 DEBUGFLAGS ?= -g -glldb
 SANFLAGS ?= -fsanitize=undefined,address
-OPTIFLAGS ?= -flto=thin -O2
+OPTIFLAGS ?= -O2
+LTOFLAGS ?= -flto
 STATICFLAGS ?= -static
 
 ifeq ($(strip $(DEBUG)),1)
@@ -43,6 +44,9 @@ CFLAGS += $(SANFLAGS)
 endif
 ifeq ($(strip $(OPTI)),1)
 CFLAGS += $(OPTIFLAGS)
+endif
+ifeq ($(strip $(LTO)),1)
+CFLAGS += $(LTOFLAGS)
 endif
 ifeq ($(strip $(STATIC)),1)
 LDFLAGS += $(STATICFLAGS)
@@ -67,7 +71,7 @@ clean:
 	$(RM) $(OBJDIR)/*.o $(DEPDIR)/*.d $(BIN)
 
 run: $(BIN)
-	@./$(BIN) $(ARGS)
+	./"$(BIN)" $(ARGS)
 
 debug: $(BIN)
-	@$(DEBUGGER) ./$(BIN)
+	@$(DEBUGGER) ./"$(BIN)"

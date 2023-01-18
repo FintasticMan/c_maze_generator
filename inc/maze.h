@@ -14,7 +14,7 @@ struct maze;
 struct maze *maze_create(size_t rows, size_t columns);
 void maze_destroy(struct maze *mz);
 
-void maze_generate(struct maze *mz);
+void maze_gen(struct maze *mz);
 void maze_find_path(struct maze *mz);
 void maze_print(FILE *fp, struct maze const *mz);
 
