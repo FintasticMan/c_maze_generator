@@ -4,16 +4,17 @@ CC := clang
 DEBUGGER := lldb
 MKDIR := mkdir -p
 SRCDIR := src
+LIBDIR :=
 OBJDIR := obj
 DEPDIR := dep
 INCDIR := inc
-SRCS := $(wildcard $(SRCDIR)/*.c)
-OBJS := $(subst $(SRCDIR)/,$(OBJDIR)/,$(SRCS:.c=.o))
-DEPS := $(subst $(SRCDIR)/,$(DEPDIR)/,$(SRCS:.c=.d))
+SRCS := $(shell find $(SRCDIR) $(LIBDIR) -type f -name '*.c')
+OBJS := $(SRCS:%=$(OBJDIR)/%.o)
+DEPS := $(SRCS:%=$(DEPDIR)/%.d)
 BIN ?= main
 
-CPPFLAGS := -I"$(INCDIR)" $(CPPFLAGS)
-CFLAGS := -Wall -Wextra -Wpedantic -pipe -std=c17 $(CFLAGS)
+CPPFLAGS := -I$(INCDIR) $(CPPFLAGS)
+CFLAGS := -pipe $(CFLAGS)
 LDFLAGS := -fuse-ld=mold -lm $(LDFLAGS)
 
 LIBS :=
@@ -30,6 +31,7 @@ LDFLAGS += $(shell pkg-config --libs $(LIBS))
 endif
 endif
 
+OWNFLAGS ?= -std=c17 -Wall -Wextra -Wpedantic
 DEBUGFLAGS ?= -g -glldb
 SANFLAGS ?= -fsanitize=undefined,address
 OPTIFLAGS ?= -O2
@@ -54,24 +56,28 @@ endif
 
 all: $(BIN)
 
-$(DEPDIR)/%.d: $(SRCDIR)/%.c
-	@$(MKDIR) "$(DEPDIR)"
-	@$(CC) $(CPPFLAGS) -MM "$<" | sed 's,\($*\)\.o[ :]*,$(OBJDIR)/\1.o: ,g' > "$@"
+$(DEPDIR)/%.c.d: %.c
+	@$(MKDIR) $(@D)
+	@$(CC) $(CPPFLAGS) -MM $< | sed 's,$(*F)\.o[: ]*,$(OBJDIR)/$<.o: ,g' > $@
 
 include $(DEPS)
 
-$(OBJDIR)/%.o: $(SRCDIR)/%.c
-	@$(MKDIR) "$(OBJDIR)"
-	$(CC) $(CPPFLAGS) $(CFLAGS) -c "$<" -o "$@"
+$(OBJDIR)/$(SRCDIR)/%.c.o: $(SRCDIR)/%.c
+	@$(MKDIR) $(@D)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(OWNFLAGS) -c $< -o $@
+
+$(OBJDIR)/$(LIBDIR)/%.c.o: $(LIBDIR)/%.c
+	@$(MKDIR) $(@D)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 $(BIN): $(OBJS)
-	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $^ -o "$@"
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(OWNFLAGS) $(LDFLAGS) $^ -o $@
 
 clean:
-	$(RM) $(OBJDIR)/*.o $(DEPDIR)/*.d $(BIN)
+	$(RM) -r $(OBJDIR) $(DEPDIR) $(BIN)
 
 run: $(BIN)
-	./"$(BIN)" $(ARGS)
+	./$(BIN) $(ARGS)
 
 debug: $(BIN)
-	@$(DEBUGGER) ./"$(BIN)"
+	@$(DEBUGGER) ./$(BIN)
