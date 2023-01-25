@@ -73,6 +73,7 @@ $(BUILDDIR)/$(LIBDIR)/%.c.o: $(LIBDIR)/%.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 $(BIN): $(OBJS)
+	@$(MKDIR) $(@D)
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(OWNFLAGS) $(LDFLAGS) $^ -o $@
 
 clean:
