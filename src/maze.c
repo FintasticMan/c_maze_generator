@@ -135,6 +135,9 @@ bool maze_try_move(
 
 void maze_gen(struct maze *const mz) {
     size_t *const stack = malloc(mz->rows * mz->columns * 2 * sizeof (size_t));
+    bool *const chosen = calloc(mz->rows * mz->columns * 4, sizeof (bool));
+    uint8_t *const nb_chosen = calloc(mz->rows * mz->columns, sizeof (uint8_t));
+    assert(stack && chosen && nb_chosen);
     stack[0] = 0;
     stack[1] = 0;
     size_t idx = 0;
@@ -154,19 +157,22 @@ void maze_gen(struct maze *const mz) {
         }
 
         bool found = false;
-        bool chosen[4] = {false};
-        for (uint8_t nb_chosen = 0; nb_chosen < 4;) {
+        while (nb_chosen[idx] < 4) {
             int r;
             do {
                 r = rand();
             } while (r > RAND_MAX - (RAND_MAX % 4));
             uint8_t const choice = r % 4;
 
-            if (!chosen[choice]) {
-                chosen[choice] = true;
-                nb_chosen++;
+            if (!chosen[idx * 4 + choice]) {
+                chosen[idx * 4 + choice] = true;
+                nb_chosen[idx]++;
 
                 if (maze_try_move(mz, stack, &idx, choice, false)) {
+                    for (uint8_t i = 0; i < 4; i++) {
+                        chosen[idx * 4 + i] = false;
+                    }
+                    nb_chosen[idx] = 0;
                     found = true;
                     break;
                 }
@@ -179,6 +185,8 @@ void maze_gen(struct maze *const mz) {
     }
 
     free(stack);
+    free(chosen);
+    free(nb_chosen);
 
     for (size_t row = 0; row < mz->rows; row++) {
         for (size_t column = 0; column < mz->columns; column++) {
@@ -189,9 +197,10 @@ void maze_gen(struct maze *const mz) {
 
 void maze_find_path(struct maze *const mz) {
     size_t *const stack = malloc(mz->rows * mz->columns * 2 * sizeof (size_t));
+    uint8_t *const dir = malloc(mz->rows * mz->columns * sizeof (uint8_t));
+    assert(stack && dir);
     stack[0] = 0;
     stack[1] = 0;
-    uint8_t *const dir = malloc(mz->rows * mz->columns * sizeof (uint8_t));
     dir[0] = 0;
     size_t idx = 0;
 
