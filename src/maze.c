@@ -7,9 +7,9 @@
 struct maze {
     size_t rows;
     size_t columns;
-    bool **cells;
-    bool **horiz_walls;
-    bool **vert_walls;
+    bool *cells;
+    bool *horiz_walls;
+    bool *vert_walls;
 };
 
 struct maze *maze_create(size_t const rows, size_t const columns) {
@@ -20,37 +20,21 @@ struct maze *maze_create(size_t const rows, size_t const columns) {
 
     mz->rows = rows;
     mz->columns = columns;
-    mz->cells = malloc(rows * sizeof (bool *));
-    mz->horiz_walls = malloc((rows + 1) * sizeof (bool *));
-    mz->vert_walls = malloc(rows * sizeof (bool *));
+    mz->cells = calloc(rows * columns, sizeof (bool));
+    mz->horiz_walls = malloc((rows + 1) * columns * sizeof (bool));
+    mz->vert_walls = malloc(rows * (columns + 1) * sizeof (bool));
     assert(mz->cells && mz->horiz_walls && mz->vert_walls);
-    for (size_t row = 0; row < rows; row++) {
-        mz->cells[row] = calloc(columns, sizeof (bool));
-        mz->horiz_walls[row] = malloc(columns * sizeof (bool));
-        mz->vert_walls[row] = malloc((columns + 1) * sizeof (bool));
-        assert(mz->cells[row] && mz->horiz_walls[row] && mz->vert_walls[row]);
-        for (size_t column = 0; column < columns; column++) {
-            mz->horiz_walls[row][column] = true;
-            mz->vert_walls[row][column] = true;
-        }
-        mz->vert_walls[row][columns] = true;
+    for (size_t i = 0; i < (rows + 1) * columns; i++) {
+        mz->horiz_walls[i] = true;
     }
-    mz->horiz_walls[rows] = malloc(columns * sizeof (bool));
-    assert(mz->horiz_walls[rows]);
-    for (size_t column = 0; column < columns; column++) {
-        mz->horiz_walls[rows][column] = true;
+    for (size_t i = 0; i < rows * (columns + 1); i++) {
+        mz->vert_walls[i] = true;
     }
 
     return mz;
 }
 
 void maze_destroy(struct maze *const mz) {
-    for (size_t row = 0; row < mz->rows; row++) {
-        free(mz->cells[row]);
-        free(mz->horiz_walls[row]);
-        free(mz->vert_walls[row]);
-    }
-    free(mz->horiz_walls[mz->rows]);
     free(mz->cells);
     free(mz->horiz_walls);
     free(mz->vert_walls);
@@ -70,12 +54,12 @@ bool maze_try_move(
 
     switch (choice) {
         case 0:
-            if (row > 0 && !mz->cells[row - 1][column]) {
-                if (!path == !mz->horiz_walls[row][column]) {
+            if (row > 0 && !mz->cells[(row - 1) * mz->columns + column]) {
+                if (!path == !mz->horiz_walls[row * mz->columns + column]) {
                     break;
                 }
                 if (!path) {
-                    mz->horiz_walls[row][column] = false;
+                    mz->horiz_walls[row * mz->columns + column] = false;
                 }
                 (*idx)++;
                 stack[*idx * 2] = row - 1;
@@ -85,12 +69,12 @@ bool maze_try_move(
             break;
 
         case 1:
-            if (column > 0 && !mz->cells[row][column - 1]) {
-                if (!path == !mz->vert_walls[row][column]) {
+            if (column > 0 && !mz->cells[row * mz->columns + column - 1]) {
+                if (!path == !mz->vert_walls[row * (mz->columns + 1) + column]) {
                     break;
                 }
                 if (!path) {
-                    mz->vert_walls[row][column] = false;
+                    mz->vert_walls[row * (mz->columns + 1) + column] = false;
                 }
                 (*idx)++;
                 stack[*idx * 2] = row;
@@ -100,12 +84,12 @@ bool maze_try_move(
             break;
 
         case 2:
-            if (row + 1 < mz->rows && !mz->cells[row + 1][column]) {
-                if (!path == !mz->horiz_walls[row + 1][column]) {
+            if (row + 1 < mz->rows && !mz->cells[(row + 1) * mz->columns + column]) {
+                if (!path == !mz->horiz_walls[(row + 1) * mz->columns + column]) {
                     break;
                 }
                 if (!path) {
-                    mz->horiz_walls[row + 1][column] = false;
+                    mz->horiz_walls[(row + 1) * mz->columns + column] = false;
                 }
                 (*idx)++;
                 stack[*idx * 2] = row + 1;
@@ -115,12 +99,12 @@ bool maze_try_move(
             break;
 
         case 3:
-            if (column + 1 < mz->columns && !mz->cells[row][column + 1]) {
-                if (!path == !mz->vert_walls[row][column + 1]) {
+            if (column + 1 < mz->columns && !mz->cells[row * mz->columns + column + 1]) {
+                if (!path == !mz->vert_walls[row * (mz->columns + 1) + column + 1]) {
                     break;
                 }
                 if (!path) {
-                    mz->vert_walls[row][column + 1] = false;
+                    mz->vert_walls[row * (mz->columns + 1) + column + 1] = false;
                 }
                 (*idx)++;
                 stack[*idx * 2] = row;
@@ -147,10 +131,10 @@ void maze_gen(struct maze *const mz) {
         size_t const row = stack[idx * 2];
         size_t const column = stack[idx * 2 + 1];
 
-        if (!mz->cells[row][column]) {
+        if (!mz->cells[row * mz->columns + column]) {
             visited++;
         }
-        mz->cells[row][column] = true;
+        mz->cells[row * mz->columns + column] = true;
 
         if (visited == mz->rows * mz->columns) {
             break;
@@ -184,10 +168,8 @@ void maze_gen(struct maze *const mz) {
     free(stack);
     free(chosen);
 
-    for (size_t row = 0; row < mz->rows; row++) {
-        for (size_t column = 0; column < mz->columns; column++) {
-            mz->cells[row][column] = false;
-        }
+    for (size_t i = 0; i < mz->rows * mz->columns; i++) {
+        mz->cells[i] = 0;
     }
 }
 
@@ -204,7 +186,7 @@ void maze_find_path(struct maze *const mz) {
         size_t const row = stack[idx * 2];
         size_t const column = stack[idx * 2 + 1];
 
-        mz->cells[row][column] = true;
+        mz->cells[row * mz->columns + column] = true;
 
         if (row == mz->rows - 1 && column == mz->columns - 1) {
             break;
@@ -221,7 +203,7 @@ void maze_find_path(struct maze *const mz) {
         }
 
         if (!found) {
-            mz->cells[row][column] = false;
+            mz->cells[row * mz->columns + column] = false;
             idx--;
         }
     }
@@ -233,18 +215,18 @@ void maze_find_path(struct maze *const mz) {
 void maze_print(FILE *const fp, struct maze const *const mz) {
     for (size_t row = 0; row < mz->rows; row++) {
         for (size_t column = 0; column < mz->columns; column++) {
-            fprintf(fp, mz->horiz_walls[row][column] ? "+---" : "+   ");
+            fprintf(fp, mz->horiz_walls[row * mz->columns + column] ? "+---" : "+   ");
         }
         fprintf(fp, "+\n");
 
         for (size_t column = 0; column < mz->columns; column++) {
-            fprintf(fp, mz->vert_walls[row][column] ? "|" : " ");
-            fprintf(fp, mz->cells[row][column] ? " . " : "   ");
+            fprintf(fp, mz->vert_walls[row * (mz->columns + 1) + column] ? "|" : " ");
+            fprintf(fp, mz->cells[row * mz->columns + column] ? " . " : "   ");
         }
-        fprintf(fp, mz->vert_walls[row][mz->columns] ? "|\n" : " \n");
+        fprintf(fp, mz->vert_walls[row * (mz->columns + 1) + mz->columns] ? "|\n" : " \n");
     }
     for (size_t column = 0; column < mz->columns; column++) {
-        fprintf(fp, mz->horiz_walls[mz->rows][column] ? "+---" : "+   ");
+        fprintf(fp, mz->horiz_walls[mz->rows * mz->columns + column] ? "+---" : "+   ");
     }
     fprintf(fp, "+\n");
 }

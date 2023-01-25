@@ -15,7 +15,7 @@ OBJS := $(SRCS:%=$(BUILDDIR)/%.o)
 DEPS := $(SRCS:%=$(BUILDDIR)/%.d)
 BIN := $(BUILDDIR)/$(PROJECT)-$(VERSION)
 
-CPPFLAGS := $(foreach INCDIR,$(INCDIRS),-I$(INCDIR)) $(CPPFLAGS)
+CPPFLAGS := $(foreach INCDIR,$(INCDIRS),-I $(INCDIR)) $(CPPFLAGS)
 CFLAGS := -pipe $(CFLAGS)
 LDFLAGS := -fuse-ld=mold -lm $(LDFLAGS)
 
@@ -60,7 +60,7 @@ all: $(BIN)
 
 $(BUILDDIR)/%.c.d: %.c
 	@$(MKDIR) $(@D)
-	@$(CC) $(CPPFLAGS) -MM $< | sed 's,$(*F)\.o[: ]*,$(BUILDDIR)/$<.o: ,g' > $@
+	@$(CC) $(CPPFLAGS) -MM $< | sed 's,$(*F)\.o[: ]*,$(BUILDDIR)/$<.o $(BUILDDIR)/$<.d: ,g' > $@
 
 include $(DEPS)
 
