@@ -1,8 +1,22 @@
 #include "maze.h"
 
-#include <assert.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
+
+#define ASSERT(c) do { \
+    if (!(c)) { \
+        fprintf( \
+            stderr, \
+            "%s:%d: %s: Assertation '%s' failed.\n", \
+            __FILE__, \
+            __LINE__, \
+            __func__, \
+            #c\
+        ); \
+        exit(1); \
+    } \
+} while (0)
 
 #define IS_BIT_SET(v, n) ((v) & (1ull << (n)))
 #define SET_BIT(v, n) do { (v) |= 1ull << (n); } while (0)
@@ -21,10 +35,10 @@ struct maze {
 };
 
 struct maze *maze_create(size_t const rows, size_t const columns) {
-    assert(rows > 0 && columns > 0);
+    ASSERT(rows > 0 && columns > 0);
 
     struct maze *const mz = malloc(sizeof (struct maze));
-    assert(mz);
+    ASSERT(mz);
 
     mz->rows = rows;
     mz->columns = columns;
@@ -33,7 +47,7 @@ struct maze *maze_create(size_t const rows, size_t const columns) {
     mz->cells = calloc((rows * columns) / 64u + 1, sizeof (uint64_t));
     mz->horiz_walls = malloc((((rows + 1) * columns) / 64u + 1) * sizeof (uint64_t));
     mz->vert_walls = malloc(((rows * (columns + 1)) / 64u + 1) * sizeof (uint64_t));
-    assert(mz->cells && mz->horiz_walls && mz->vert_walls);
+    ASSERT(mz->cells && mz->horiz_walls && mz->vert_walls);
     for (size_t i = 0; i < ((rows + 1) * columns) / 64u + 1; i++) {
         mz->horiz_walls[i] = 0xFFFFFFFFFFFFFFFF;
     }
@@ -45,7 +59,7 @@ struct maze *maze_create(size_t const rows, size_t const columns) {
 }
 
 void maze_destroy(struct maze *const mz) {
-    assert(mz);
+    ASSERT(mz);
 
     free(mz->cells);
     free(mz->horiz_walls);
@@ -130,11 +144,11 @@ bool maze_try_move(
 }
 
 void maze_gen(struct maze *const mz) {
-    assert(mz);
+    ASSERT(mz);
 
     size_t *const stack = malloc(mz->rows * mz->columns * 2 * sizeof (size_t));
     uint8_t *const chosen = malloc(mz->rows * mz->columns * sizeof (uint8_t));
-    assert(stack && chosen);
+    ASSERT(stack && chosen);
     stack[0] = 0;
     stack[1] = 0;
     chosen[0] = 0;
@@ -188,11 +202,11 @@ void maze_gen(struct maze *const mz) {
 }
 
 void maze_find_path(struct maze *const mz) {
-    assert(mz);
+    ASSERT(mz);
 
     size_t *const stack = malloc(mz->rows * mz->columns * 2 * sizeof (size_t));
     uint8_t *const dir = malloc(mz->rows * mz->columns * sizeof (uint8_t));
-    assert(stack && dir);
+    ASSERT(stack && dir);
     stack[0] = 0;
     stack[1] = 0;
     dir[0] = 0;
@@ -229,7 +243,7 @@ void maze_find_path(struct maze *const mz) {
 }
 
 void maze_print(FILE *const fp, struct maze const *const mz) {
-    assert(mz);
+    ASSERT(mz);
 
     for (size_t row = 0; row < mz->rows; row++) {
         for (size_t column = 0; column < mz->columns; column++) {
