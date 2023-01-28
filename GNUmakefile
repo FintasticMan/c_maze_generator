@@ -33,7 +33,7 @@ LDFLAGS += $(shell pkg-config --libs $(LIBS))
 endif
 endif
 
-OWNFLAGS ?= -std=c17 -Wall -Wextra -Wpedantic
+OWNFLAGS ?= -std=c17 -Wall -Wextra -Wpedantic -Werror
 DEBUGFLAGS ?= -g -glldb
 SANFLAGS ?= -fsanitize=undefined,address
 OPTIFLAGS ?= -O2
