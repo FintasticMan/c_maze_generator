@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#define ASSERT(c) do { \
+#define ASSERT_RUNTIME(c) do { \
     if (!(c)) { \
         fprintf( \
             stderr, \
@@ -36,10 +36,10 @@ struct maze {
 };
 
 struct maze *maze_create(size_t const rows, size_t const columns) {
-    ASSERT(rows > 0 && columns > 0);
+    ASSERT_RUNTIME(rows > 0 && columns > 0);
 
     struct maze *const mz = malloc(sizeof (struct maze));
-    ASSERT(mz);
+    ASSERT_RUNTIME(mz);
 
     mz->rows = rows;
     mz->columns = columns;
@@ -48,7 +48,7 @@ struct maze *maze_create(size_t const rows, size_t const columns) {
     mz->cells = calloc((rows * columns) / 8 + 1, sizeof (uint8_t));
     mz->horiz_walls = malloc((((rows + 1) * columns) / 8 + 1) * sizeof (uint8_t));
     mz->vert_walls = malloc(((rows * (columns + 1)) / 8 + 1) * sizeof (uint8_t));
-    ASSERT(mz->cells && mz->horiz_walls && mz->vert_walls);
+    ASSERT_RUNTIME(mz->cells && mz->horiz_walls && mz->vert_walls);
     for (size_t i = 0; i < ((rows + 1) * columns) / 8 + 1; i++) {
         mz->horiz_walls[i] = UINT8_MAX;
     }
@@ -69,7 +69,7 @@ void maze_destroy(struct maze *const mz) {
     free(mz);
 }
 
-bool maze_try_move(
+static inline bool maze_try_move(
     struct maze *const mz,
     size_t *const stack,
     size_t *const idx,
@@ -149,7 +149,7 @@ void maze_gen(struct maze *const mz) {
 
     size_t *const stack = malloc(mz->rows * mz->columns * 2 * sizeof (size_t));
     uint8_t *const chosen = malloc(mz->rows * mz->columns * sizeof (uint8_t));
-    ASSERT(stack && chosen);
+    ASSERT_RUNTIME(stack && chosen);
     stack[0] = 0;
     stack[1] = 0;
     chosen[0] = 0;
@@ -207,7 +207,7 @@ void maze_find_path(struct maze *const mz) {
 
     size_t *const stack = malloc(mz->rows * mz->columns * 2 * sizeof (size_t));
     uint8_t *const dir = malloc(mz->rows * mz->columns * sizeof (uint8_t));
-    ASSERT(stack && dir);
+    ASSERT_RUNTIME(stack && dir);
     stack[0] = 0;
     stack[1] = 0;
     dir[0] = 0;
