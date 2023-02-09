@@ -5,23 +5,30 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#define ASSERT_RUNTIME(c) do { \
-    if (!(c)) { \
-        fprintf( \
-            stderr, \
-            "%s:%d: %s: Assertion '%s' failed.\n", \
-            __FILE__, \
-            __LINE__, \
-            __func__, \
-            #c \
-        ); \
-        exit(1); \
-    } \
-} while (false)
+#define ASSERT_RUNTIME(c)                                                      \
+    do {                                                                       \
+        if (!(c)) {                                                            \
+            fprintf(                                                           \
+                stderr,                                                        \
+                "%s:%d: %s: Assertion '%s' failed.\n",                         \
+                __FILE__,                                                      \
+                __LINE__,                                                      \
+                __func__,                                                      \
+                #c                                                             \
+            );                                                                 \
+            exit(1);                                                           \
+        }                                                                      \
+    } while (false)
 
 #define IS_BIT_SET(v, n) ((v) & (0x1 << (n)))
-#define SET_BIT(v, n) do {(v) |= 0x1 << (n);} while (false)
-#define FLIP_BIT(v, n) do {(v) ^= 0x1 << (n);} while (false)
+#define SET_BIT(v, n)                                                          \
+    do {                                                                       \
+        (v) |= 0x1 << (n);                                                     \
+    } while (false)
+#define FLIP_BIT(v, n)                                                         \
+    do {                                                                       \
+        (v) ^= 0x1 << (n);                                                     \
+    } while (false)
 
 #define IS_BIT_SET_8ARRAY(v, n) IS_BIT_SET((v)[(n) / 0x8], (n) % 0x8)
 #define SET_BIT_8ARRAY(v, n) SET_BIT((v)[(n) / 0x8], (n) % 0x8)
@@ -38,21 +45,19 @@ struct maze {
 struct maze *maze_create(size_t const rows, size_t const columns) {
     ASSERT_RUNTIME(rows > 0 && columns > 0);
 
-    struct maze *const mz = malloc(sizeof (struct maze));
+    struct maze *const mz = malloc(sizeof(struct maze));
     ASSERT_RUNTIME(mz);
 
     mz->rows = rows;
     mz->columns = columns;
-    // TODO: this allocates between 1 and 3 extra uint8_ts if rows * columns is
-    //       divisible by 8, make it not
-    mz->cells = calloc((rows * columns) / 8 + 1, sizeof (uint8_t));
-    mz->horiz_walls = malloc((((rows + 1) * columns) / 8 + 1) * sizeof (uint8_t));
-    mz->vert_walls = malloc(((rows * (columns + 1)) / 8 + 1) * sizeof (uint8_t));
+    mz->cells = calloc((rows * columns + 7) / 8, sizeof(uint8_t));
+    mz->horiz_walls = malloc(((rows + 1) * columns + 7) / 8 * sizeof(uint8_t));
+    mz->vert_walls = malloc((rows * (columns + 1) + 7) / 8 * sizeof(uint8_t));
     ASSERT_RUNTIME(mz->cells && mz->horiz_walls && mz->vert_walls);
-    for (size_t i = 0; i < ((rows + 1) * columns) / 8 + 1; i++) {
+    for (size_t i = 0; i < ((rows + 1) * columns + 7) / 8; i++) {
         mz->horiz_walls[i] = UINT8_MAX;
     }
-    for (size_t i = 0; i < (rows * (columns + 1)) / 8 + 1; i++) {
+    for (size_t i = 0; i < (rows * (columns + 1) + 7) / 8; i++) {
         mz->vert_walls[i] = UINT8_MAX;
     }
 
@@ -81,12 +86,23 @@ static inline bool maze_try_move(
 
     switch (choice) {
         case 0:
-            if (row > 0 && !IS_BIT_SET_8ARRAY(mz->cells, (row - 1) * mz->columns + column)) {
-                if (!path == !IS_BIT_SET_8ARRAY(mz->horiz_walls, row * mz->columns + column)) {
+            if (row > 0
+                && !IS_BIT_SET_8ARRAY(
+                    mz->cells,
+                    (row - 1) * mz->columns + column
+                )) {
+                if (!path
+                    == !IS_BIT_SET_8ARRAY(
+                        mz->horiz_walls,
+                        row * mz->columns + column
+                    )) {
                     break;
                 }
                 if (!path) {
-                    FLIP_BIT_8ARRAY(mz->horiz_walls, row * mz->columns + column);
+                    FLIP_BIT_8ARRAY(
+                        mz->horiz_walls,
+                        row * mz->columns + column
+                    );
                 }
                 (*idx)++;
                 stack[*idx * 2] = row - 1;
@@ -96,12 +112,23 @@ static inline bool maze_try_move(
             break;
 
         case 1:
-            if (column > 0 && !IS_BIT_SET_8ARRAY(mz->cells, row * mz->columns + column - 1)) {
-                if (!path == !IS_BIT_SET_8ARRAY(mz->vert_walls, row * (mz->columns + 1) + column)) {
+            if (column > 0
+                && !IS_BIT_SET_8ARRAY(
+                    mz->cells,
+                    row * mz->columns + column - 1
+                )) {
+                if (!path
+                    == !IS_BIT_SET_8ARRAY(
+                        mz->vert_walls,
+                        row * (mz->columns + 1) + column
+                    )) {
                     break;
                 }
                 if (!path) {
-                    FLIP_BIT_8ARRAY(mz->vert_walls, row * (mz->columns + 1) + column);
+                    FLIP_BIT_8ARRAY(
+                        mz->vert_walls,
+                        row * (mz->columns + 1) + column
+                    );
                 }
                 (*idx)++;
                 stack[*idx * 2] = row;
@@ -111,12 +138,23 @@ static inline bool maze_try_move(
             break;
 
         case 2:
-            if (row + 1 < mz->rows && !IS_BIT_SET_8ARRAY(mz->cells, (row + 1) * mz->columns + column)) {
-                if (!path == !IS_BIT_SET_8ARRAY(mz->horiz_walls, (row + 1) * mz->columns + column)) {
+            if (row + 1 < mz->rows
+                && !IS_BIT_SET_8ARRAY(
+                    mz->cells,
+                    (row + 1) * mz->columns + column
+                )) {
+                if (!path
+                    == !IS_BIT_SET_8ARRAY(
+                        mz->horiz_walls,
+                        (row + 1) * mz->columns + column
+                    )) {
                     break;
                 }
                 if (!path) {
-                    FLIP_BIT_8ARRAY(mz->horiz_walls, (row + 1) * mz->columns + column);
+                    FLIP_BIT_8ARRAY(
+                        mz->horiz_walls,
+                        (row + 1) * mz->columns + column
+                    );
                 }
                 (*idx)++;
                 stack[*idx * 2] = row + 1;
@@ -126,12 +164,23 @@ static inline bool maze_try_move(
             break;
 
         case 3:
-            if (column + 1 < mz->columns && !IS_BIT_SET_8ARRAY(mz->cells, row * mz->columns + column + 1)) {
-                if (!path == !IS_BIT_SET_8ARRAY(mz->vert_walls, row * (mz->columns + 1) + column + 1)) {
+            if (column + 1 < mz->columns
+                && !IS_BIT_SET_8ARRAY(
+                    mz->cells,
+                    row * mz->columns + column + 1
+                )) {
+                if (!path
+                    == !IS_BIT_SET_8ARRAY(
+                        mz->vert_walls,
+                        row * (mz->columns + 1) + column + 1
+                    )) {
                     break;
                 }
                 if (!path) {
-                    FLIP_BIT_8ARRAY(mz->vert_walls, row * (mz->columns + 1) + column + 1);
+                    FLIP_BIT_8ARRAY(
+                        mz->vert_walls,
+                        row * (mz->columns + 1) + column + 1
+                    );
                 }
                 (*idx)++;
                 stack[*idx * 2] = row;
@@ -147,8 +196,8 @@ static inline bool maze_try_move(
 void maze_gen(struct maze *const mz) {
     assert(mz);
 
-    size_t *const stack = malloc(mz->rows * mz->columns * 2 * sizeof (size_t));
-    uint8_t *const chosen = malloc(mz->rows * mz->columns * sizeof (uint8_t));
+    size_t *const stack = malloc(mz->rows * mz->columns * 2 * sizeof(size_t));
+    uint8_t *const chosen = malloc(mz->rows * mz->columns * sizeof(uint8_t));
     ASSERT_RUNTIME(stack && chosen);
     stack[0] = 0;
     stack[1] = 0;
@@ -197,7 +246,7 @@ void maze_gen(struct maze *const mz) {
     free(stack);
     free(chosen);
 
-    for (size_t i = 0; i < (mz->rows * mz->columns) / 8 + 1; i++) {
+    for (size_t i = 0; i < (mz->rows * mz->columns + 7) / 8; i++) {
         mz->cells[i] = 0x0;
     }
 }
@@ -205,8 +254,8 @@ void maze_gen(struct maze *const mz) {
 void maze_find_path(struct maze *const mz) {
     assert(mz);
 
-    size_t *const stack = malloc(mz->rows * mz->columns * 2 * sizeof (size_t));
-    uint8_t *const dir = malloc(mz->rows * mz->columns * sizeof (uint8_t));
+    size_t *const stack = malloc(mz->rows * mz->columns * 2 * sizeof(size_t));
+    uint8_t *const dir = malloc(mz->rows * mz->columns * sizeof(uint8_t));
     ASSERT_RUNTIME(stack && dir);
     stack[0] = 0;
     stack[1] = 0;
@@ -248,18 +297,48 @@ void maze_print(FILE *const fp, struct maze const *const mz) {
 
     for (size_t row = 0; row < mz->rows; row++) {
         for (size_t column = 0; column < mz->columns; column++) {
-            fprintf(fp, IS_BIT_SET_8ARRAY(mz->horiz_walls, row * mz->columns + column) ? "+---" : "+   ");
+            fprintf(
+                fp,
+                IS_BIT_SET_8ARRAY(mz->horiz_walls, row * mz->columns + column)
+                    ? "+---"
+                    : "+   "
+            );
         }
         fprintf(fp, "+\n");
 
         for (size_t column = 0; column < mz->columns; column++) {
-            fprintf(fp, IS_BIT_SET_8ARRAY(mz->vert_walls, row * (mz->columns + 1) + column) ? "|" : " ");
-            fprintf(fp, IS_BIT_SET_8ARRAY(mz->cells, row * mz->columns + column) ? " . " : "   ");
+            fprintf(
+                fp,
+                IS_BIT_SET_8ARRAY(
+                    mz->vert_walls,
+                    row * (mz->columns + 1) + column
+                )
+                    ? "|"
+                    : " "
+            );
+            fprintf(
+                fp,
+                IS_BIT_SET_8ARRAY(mz->cells, row * mz->columns + column) ? " . "
+                                                                         : "   "
+            );
         }
-        fprintf(fp, IS_BIT_SET_8ARRAY(mz->vert_walls, row * (mz->columns + 1) + mz->columns) ? "|\n" : " \n");
+        fprintf(
+            fp,
+            IS_BIT_SET_8ARRAY(
+                mz->vert_walls,
+                row * (mz->columns + 1) + mz->columns
+            )
+                ? "|\n"
+                : " \n"
+        );
     }
     for (size_t column = 0; column < mz->columns; column++) {
-        fprintf(fp, IS_BIT_SET_8ARRAY(mz->horiz_walls, mz->rows * mz->columns + column) ? "+---" : "+   ");
+        fprintf(
+            fp,
+            IS_BIT_SET_8ARRAY(mz->horiz_walls, mz->rows * mz->columns + column)
+                ? "+---"
+                : "+   "
+        );
     }
     fprintf(fp, "+\n");
 }
